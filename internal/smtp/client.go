@@ -15,17 +15,19 @@ type Client struct {
 	Port               string
 	Username           string
 	Password           string
-	SenderEmail        string // The "From" address to spoof (e.g. donald@trump.com)
+	SenderEmail        string
+	SenderName         string // New
 	InsecureSkipVerify bool
 }
 
-func NewClient(host, port, username, password, senderEmail string, insecureSkipVerify bool) *Client {
+func NewClient(host, port, username, password, senderEmail, senderName string, insecureSkipVerify bool) *Client {
 	return &Client{
 		Host:               host,
 		Port:               port,
 		Username:           username,
 		Password:           password,
 		SenderEmail:        senderEmail,
+		SenderName:         senderName,
 		InsecureSkipVerify: insecureSkipVerify,
 	}
 }
@@ -115,7 +117,7 @@ func (c *Client) Send(to, subject, body string) error {
 
 	// 7. Inject Headers & Body
 	headers := []string{
-		fmt.Sprintf("From: Donald Trump <%s>", c.SenderEmail), // The spoofed sender
+		fmt.Sprintf("From: %s <%s>", c.SenderName, c.SenderEmail), // Dynamic Name & Email
 		fmt.Sprintf("To: %s", to),
 		fmt.Sprintf("Subject: %s", subject),
 		fmt.Sprintf("Date: %s", time.Now().Format(time.RFC1123Z)),

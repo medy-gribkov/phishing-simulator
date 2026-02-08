@@ -1,45 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phishing Simulator - Educational Tool</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background-color: #f4f4f9; color: #333; }
-        h1 { color: #d32f2f; text-align: center; }
-        .warning { background-color: #ffebee; border: 1px solid #ffcdd2; color: #b71c1c; padding: 15px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9em; }
-        form { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="email"], input[type="text"], textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        textarea { height: 150px; }
-        button { background-color: #d32f2f; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 1.1em; }
-        button:hover { background-color: #b71c1c; }
-        .success { background-color: #e8f5e9; color: #2e7d32; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #c8e6c9; }
-        .error { background-color: #ffebee; color: #c62828; padding: 15px; border-radius: 4px; margin-bottom: 20px; border: 1px solid #ffcdd2; }
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        h1 {
+            color: #d32f2f;
+            text-align: center;
+        }
+
+        .warning {
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            color: #b71c1c;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        form {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="email"],
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            height: 150px;
+        }
+
+        button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1.1em;
+        }
+
+        button:hover {
+            background-color: #b71c1c;
+        }
+
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #c8e6c9;
+        }
+
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #ffcdd2;
+        }
     </style>
 </head>
+
 <body>
 
-    <h1>🎣 Phishing Simulator</h1>
-
-    <div class="warning">
-        <strong>EDUCATIONAL USE ONLY.</strong><br>
-        This tool demonstrates how email spoofing works by manually checking SMTP headers.<br>
-        Emails sent from here <em>will</em> be blocked by modern security filters (SPF/DKIM/DMARC).
-    </div>
+    <h1>The best Phishing App you will find</h1>
 
     {{if .Success}}
-        <div class="success">✅ {{.Success}}</div>
+    <div class="success">✅ {{.Success}}</div>
     {{end}}
     {{if .Error}}
-        <div class="error">❌ {{.Error}}</div>
+    <div class="error">❌ {{.Error}}</div>
     {{end}}
 
     <form method="POST" action="/send">
         <div class="form-group">
             <label for="to">Recipient Email</label>
             <input type="email" id="to" name="to" required placeholder="victim@example.com">
+            <div id="emailError" style="font-size: 0.8em; color: red; margin-top: 5px; display: none;">Invalid email
+                format (needs user@domain.com)</div>
         </div>
 
         <div class="form-group">
@@ -48,12 +121,51 @@
         </div>
 
         <div class="form-group">
-            <label for="body">Message Body</label>
-            <textarea id="body" name="body" required placeholder="Dear User, please click here..."></textarea>
+            <label for="body">Message Body (Max 1000 characters)</label>
+            <textarea id="body" name="body" required placeholder="Dear User, please click here..."
+                oninput="validateCharCount(this)"></textarea>
+            <div id="charCount" style="font-size: 0.8em; color: #666; text-align: right; margin-top: 5px;">0 / 1000
+                chars</div>
         </div>
 
         <button type="submit">Send Spoofed Email</button>
     </form>
 
+    <script>
+        function validateCharCount(textarea) {
+            const maxChars = 1000;
+            const count = textarea.value.length;
+            const counter = document.getElementById('charCount');
+
+            counter.textContent = count + " / " + maxChars + " chars";
+
+            if (count > maxChars) {
+                textarea.setCustomValidity("Body too long! You have " + count + " characters (Limit: " + maxChars + ")");
+                counter.style.color = "red";
+            } else {
+                textarea.setCustomValidity("");
+                counter.style.color = "#666";
+            }
+        }
+
+        // Real-time Email Validation
+        const emailInput = document.getElementById('to');
+        const emailError = document.getElementById('emailError');
+
+        emailInput.addEventListener('input', function (event) {
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+            // Should show error if value exists AND doesn't match
+            if (this.value && !emailRegex.test(this.value)) {
+                this.setCustomValidity("Invalid email");
+                emailError.style.display = 'block';
+            } else {
+                this.setCustomValidity("");
+                emailError.style.display = 'none';
+            }
+        });
+    </script>
+
 </body>
+
 </html>

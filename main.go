@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"phishing-simulator/config"
@@ -47,9 +48,24 @@ func main() {
 		subject := r.FormValue("subject")
 		body := r.FormValue("body")
 
-		// Basic Validation
-		if to == "" || subject == "" || body == "" {
-			tmpl.Execute(w, PageData{Error: "All fields are required."})
+		// Basic Validation: All fields required, body must not be empty
+		if to == "" || subject == "" || len(strings.TrimSpace(body)) == 0 {
+			tmpl.Execute(w, PageData{Error: "All fields are required (body must not be empty)."})
+			return
+		}
+
+		// Validation 1: Strict Email Regex (must have dot)
+		// Regex: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+		emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+		matched, _ := regexp.MatchString(emailRegex, to)
+		if !matched {
+			tmpl.Execute(w, PageData{Error: "Invalid recipient email format (must be user@domain.tld)."})
+			return
+		}
+
+		// Validation 2: Character Count Limit (Max 1000 chars)
+		if len(body) > 1000 {
+			tmpl.Execute(w, PageData{Error: fmt.Sprintf("Body too long! Limit is 1000 characters (current: %d).", len(body))})
 			return
 		}
 
@@ -66,6 +82,7 @@ func main() {
 			cfg.SMTPSenderUser,
 			cfg.SMTPSenderPass,
 			cfg.SMTPSenderEmail,
+			cfg.SMTPSenderName,
 			cfg.InsecureSkipVerify,
 		)
 
@@ -77,11 +94,12 @@ func main() {
 		}
 
 		log.Printf("Email sent to %s via %s:%s", to, cfg.SMTPHost, cfg.SMTPPort)
-		tmpl.Execute(w, PageData{Success: "Email successfully spoofed and sent (check MailHog)!"})
+		tmpl.Execute(w, PageData{Success: "Email successfully spoofed and sent!"})
 	})
 
 	log.Printf("Server listening on port %s", cfg.Port)
-	log.Printf("Configuration: SMTP Host=%s, Port=%s, Sender=%s", cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPSenderEmail)
+	log.Printf("Configuration: SMTP Host=%s, Port=%s, Sender=%s <%s>",
+		cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPSenderName, cfg.SMTPSenderEmail)
 
 	if err := http.ListenAndServe(":"+cfg.Port, nil); err != nil {
 		log.Fatalf("Error starting server: %v", err)
